@@ -438,6 +438,8 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 				 
 				 nomineeRepo.save(newNominee);
 				 
+				 //we are adding to comment to check git updation
+				 
 			}
 			
 			
