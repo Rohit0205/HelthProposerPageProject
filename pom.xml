@@ -56,6 +56,15 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<!--Swagger dependencies-->
+		
+		<dependency>
+	<groupId>org.springdoc</groupId>
+	<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+	<version>2.2.0</version>
+</dependency>
+
+		
 		
 <!-- Hibernate Validator (implementation of the API) -->
 <!-- Javax Validation API (JSR 303 / 349) -->

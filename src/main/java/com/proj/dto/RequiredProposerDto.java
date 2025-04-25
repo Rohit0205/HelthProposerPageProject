@@ -1,7 +1,5 @@
 package com.proj.dto;
 
-import java.util.List;
-
 import com.proj.enumclasses.PropserTitile;
 
 public class RequiredProposerDto {
@@ -19,16 +17,17 @@ public class RequiredProposerDto {
 	private String state;
 	
 	
-	private List<NomineeDto> nomineeDetails;
+	private NomineeDto nomineeDetails;
 	
 	
 	
 	
 	
-	public List<NomineeDto> getNomineeDetails() {
+	
+	public NomineeDto getNomineeDetails() {
 		return nomineeDetails;
 	}
-	public void setNomineeDetails(List<NomineeDto> nomineeDetails) {
+	public void setNomineeDetails(NomineeDto nomineeDetails) {
 		this.nomineeDetails = nomineeDetails;
 	}
 	public PropserTitile getPropserTitle() {
