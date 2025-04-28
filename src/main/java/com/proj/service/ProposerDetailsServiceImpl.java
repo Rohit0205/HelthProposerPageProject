@@ -1,14 +1,22 @@
 package com.proj.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.proj.dto.NomineeDto;
@@ -28,6 +36,8 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -41,6 +51,8 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 
 	@Autowired
 	private Validation valid;
+	
+	
 
 	@Autowired
 	private EntityManager entityManager;
@@ -531,7 +543,7 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 	@Override
 	public RequiredProposerDto fetchProposerById(Integer proposerId) {
 
-		Optional<ProposerDetails> opt = propserRepo.findById(proposerId);
+		Optional<ProposerDetails> opt = propserRepo.fetchDataById(proposerId, "yes");
 		RequiredProposerDto dto = new RequiredProposerDto();
 
 		if (opt.isPresent()) {
@@ -672,7 +684,7 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 				predicate.add(cb.like(cb.lower(root.get("state")), "%" + searching.getState().toLowerCase() + "%"));
 			}
 
-			if (searching.getMobileNo() != null) {
+			if (searching.getMobileNo() != null && !searching.getMobileNo().toString().isEmpty() && searching.getMobileNo()!=0) {
 				predicate.add(cb.equal(root.get("mobileNo"), searching.getMobileNo()));
 			}
 		}
@@ -724,13 +736,15 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 	}
 
 	@Override
-	public List<ProposerDetails> fetchAllProposerDataWithStringBuilder(Peginatior peginatior) {
+	public List<ProposerDetails> fetchAllProposerDataWithStringBuilder(Peginatior paginatior) {
 
 		StringBuilder builder = new StringBuilder("select p from ProposerDetails p where p.activeStatus = 'yes'");
 
-		String sortBy = peginatior.getSortBy();
-		String sortByOrder = peginatior.getSortOreder();
+		String sortBy = paginatior.getSortBy();
+		String sortByOrder = paginatior.getSortOreder();
 
+		String sort = (sortBy!=null && !sortBy.isBlank()) ? sortBy : "proposerId";
+		
 		if (sortBy == null || sortBy.isEmpty()) {
 			sortBy = "proposerId";
 		}
@@ -739,7 +753,13 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 			sortByOrder = "desc";
 		}
 
-		Searching searching = peginatior.getSearch();
+		Searching searching = paginatior.getSearch();
+		
+		if(searching==null)
+		{
+			searching=new Searching();
+			paginatior.setSearch(searching);
+		}
 
 		if (searching != null) {
 
@@ -765,42 +785,83 @@ public class ProposerDetailsServiceImpl implements ProposerDetailsService {
 				builder.append(" and lower(state) like ").append("'%" + state.toLowerCase() + "%'");
 			}
 
-			if (mobileNo != null && !mobileNo.toString().isEmpty()) {
+			if (mobileNo != null && !mobileNo.toString().isEmpty() && mobileNo!=0) {
 				builder.append(" and mobileNo = ").append(mobileNo);
 
 			}
 
 		}
-
+		
 		builder.append(" order by p.").append(sortBy).append(" ").append(sortByOrder);
 
 		TypedQuery<ProposerDetails> query = entityManager.createQuery(builder.toString(), ProposerDetails.class);
 
-		int page = peginatior.getPageNo();
-		int size = peginatior.getPageSize();
+		int page = paginatior.getPageNo();
+		int size = paginatior.getPageSize();
 
 		int startIndext = ((page - 1) * size);
 		int endIndex = (startIndext + size);
 		
-		
-
 		if (page > 0 && size > 0)
 
 		{
 
-
 			query.setFirstResult(startIndext);
 			query.setMaxResults(size);
+		} else if ((size == 0 && page > 0) || (size > 0 && page == 0)) {
+			throw new IllegalArgumentException("please Enter Valid Number(Zero Not allowed)");
+
 		}
-		else 
-			if ((size == 0 && page > 0 ) || (size>0 && page==0)) {
-				throw new IllegalArgumentException("please Enter Valid Number(Zero Not allowed)");
 
-			}
-
-
+	
 		return query.getResultList();
 
+	}
+
+	@Override
+	public void downloadDataWithExcel(HttpServletResponse response) throws IOException {
+		
+		
+		List<ProposerDetails> list= propserRepo.findAllByActiveStatus("yes");
+		
+		XSSFWorkbook workbook= new XSSFWorkbook();
+		
+		XSSFSheet sheet=workbook.createSheet("ProposerDetails");
+		
+		XSSFRow row=sheet.createRow(0);
+		
+		row.createCell(0).setCellValue("prposer_Id");
+		row.createCell(1).setCellValue("prop_First_Name");
+		row.createCell(2).setCellValue("prop_Middle_Name");
+		row.createCell(3).setCellValue("prop_Last_Name");
+		row.createCell(4).setCellValue("Mobile_No");
+		row.createCell(5).setCellValue("Email");
+		row.createCell(6).setCellValue("prop_Address");
+		
+		int indexRow=1;
+		
+		for(ProposerDetails data:list)
+		{
+			XSSFRow dataRow=sheet.createRow(indexRow);
+			
+			dataRow.createCell(0).setCellValue(data.getProposerId());
+			dataRow.createCell(1).setCellValue(data.getFirstName());
+			dataRow.createCell(2).setCellValue(data.getMiddleName());
+			dataRow.createCell(3).setCellValue(data.getLastName());
+			dataRow.createCell(4).setCellValue(data.getMobileNo());
+			dataRow.createCell(5).setCellValue(data.getEmail());
+			dataRow.createCell(6).setCellValue(data.getAddressLine1());
+			
+			indexRow++;
+		}
+		
+		ServletOutputStream ops=response.getOutputStream();
+		workbook.write(ops);
+		
+		workbook.close();
+		ops.close();
+		
+		
 	}
 
 }

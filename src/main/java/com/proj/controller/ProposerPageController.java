@@ -1,5 +1,6 @@
 package com.proj.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,8 @@ import com.proj.pagination.Peginatior;
 import com.proj.responseHandler.ProposerResponseHandler;
 import com.proj.searcher.Searching;
 import com.proj.service.ProposerDetailsService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/proposer_jurney")
@@ -222,7 +225,9 @@ public class ProposerPageController {
 
 			Searching searching = peginatior.getSearch();
 
-			if (searching != null ) {
+			if (searching != null || !searching.getFirstName().isEmpty() || !searching.getLastName().isEmpty()
+					|| !searching.getCity().isEmpty() || !searching.getState().isEmpty()
+					|| !searching.getMobileNo().toString().isEmpty()) {
 
 				handler.setTotalRecord(list.size());
 
@@ -248,5 +253,21 @@ public class ProposerPageController {
 
 		return handler;
 	}
+	
+	
+	@GetMapping("/download_excel_sheet")
+	public void downloadExcelFile(HttpServletResponse response) throws IOException
+	{
+		
+		 response.setContentType("application/octet-stream");
+	        String headerKey = "Content-Disposition";
+	        String headerValue = "attachment; filename=proposerDetails.xlsx";
+	        response.setHeader(headerKey, headerValue);
+		
+		
+		proposerService.downloadDataWithExcel(response);
+	}
+	
+	
 
 }

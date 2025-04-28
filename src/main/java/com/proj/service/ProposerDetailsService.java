@@ -1,11 +1,16 @@
 package com.proj.service;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.util.List;
 
 import com.proj.dto.ProposerDto;
 import com.proj.dto.RequiredProposerDto;
 import com.proj.entity.ProposerDetails;
 import com.proj.pagination.Peginatior;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 
@@ -26,4 +31,6 @@ public interface ProposerDetailsService {
 	public List<ProposerDetails> fetchAllProposerDataWithPagination(Peginatior paginator);
 	
 	public List<ProposerDetails> fetchAllProposerDataWithStringBuilder(Peginatior peginatior);
+	
+	public void downloadDataWithExcel(HttpServletResponse response)throws IOException;
 }

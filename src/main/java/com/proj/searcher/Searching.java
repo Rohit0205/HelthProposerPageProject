@@ -42,14 +42,7 @@ public class Searching {
 	public void setState(String state) {
 		this.state = state;
 	}
-	public Searching(String firstName, String lastName, Long mobileNo, String city, String state) {
-		super();
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.mobileNo = mobileNo;
-		this.city = city;
-		this.state = state;
-	}
+	
 	
 	
 	

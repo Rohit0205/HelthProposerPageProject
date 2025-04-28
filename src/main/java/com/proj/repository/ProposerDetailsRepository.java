@@ -32,4 +32,7 @@ public interface ProposerDetailsRepository extends JpaRepository<ProposerDetails
 	 boolean existsByAdharNo(Long adharNo);
 	 
 	 boolean existsByPanNumber(String panNumber);
+	 
+	 @Query("select p from ProposerDetails p where p.proposerId = :proposerId and p.activeStatus = :status")
+	 public Optional<ProposerDetails> fetchDataById(@Param("proposerId") Integer proposerId, @Param("status") String status);
 }
